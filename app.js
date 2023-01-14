@@ -8,23 +8,19 @@ class Player {
     makeTransfer(recipient, amount) {
         if (this.balance >= amount) {
             this.balance -= amount;
-            this.operations.push({ type: 'out', amount: amount });
+            this.operations.push(-amount);
 
-            recipient.balance += amount;
-            recipient.operations.push({ type: 'in', amount: amount });
+            recipient.balance += Number(amount);
+            recipient.operations.push(Number(amount));
 
-            updatePlayerBalances();
-
-            return true;
         } else {
             alert('Nie masz wystarczająco środków na koncie.');
-            return false;
         }
     }
 }
 
 const playersArray = [];
-let activePlayerIndex;
+let activePlayerIndex = 0;
 let activePlayer = playersArray[activePlayerIndex];
 
 
@@ -35,7 +31,17 @@ const $accounts = document.querySelector(".accounts");
 let $playerContainer = document.querySelectorAll(".player");
 let $activePlayer = document.querySelector(".activePlayerText");
 
+let $transfer = document.querySelectorAll(".transfer");
 
+
+
+
+const updatePlayerBalances = () => {
+    playersArray.forEach((player, index) => {
+        const playerElement = document.querySelector(`.player:nth-of-type(${index + 1}) .balance`);
+        playerElement.textContent = `${player.balance}$`;
+    });
+};
 
 $form.addEventListener('submit', e => {
     e.preventDefault();
@@ -48,7 +54,7 @@ $form.addEventListener('submit', e => {
         const player = new Player(`Gracz ${i + 1}`);
         playersArray.push(player);
         $names.insertAdjacentHTML("beforeend", ` <label for="names">Gracz ${i + 1}</label>
-                             <input type="text" id="names" name="players" class="player__names">`);
+                             <input type="text" id="names" name="players" class="player__names" value="Gracz ${i+1}">`);
 
     }
 
@@ -69,15 +75,15 @@ $names.addEventListener('submit', e => {
         const html =`  
                             <p class="name">${playersArray[index].name}</p>
                             <p class="balance">${playersArray[index].balance}$</p>
-                            <form class="opponents">
-                                <label for="player-${index + 1}-select">
-                                    <select id="player-${index + 1}-select" class="selectOpponent"></select>
-                                </label>
-                            </form>
                             <form class="transfer">
+                                <label for="player-${index + 1}">
+                                    <select id="player-${index + 1}" class="selectOpponent" name="selectOpponent"></select>
+                                </label>
+                           
+                            
                                 <label for="amount">Kwota:</label>
                                 <input type="number" id="amount" name="amount">
-                                <button type="submit">Wykonaj przelew</button>
+                                <button type="submit" class="transfer-button">Wykonaj przelew</button>
                             </form>
                         `;
 
@@ -94,6 +100,21 @@ $names.addEventListener('submit', e => {
     createOpponentsArray();
     addClickEvent();
     createOpponentsList(playersArray);
+    $transfer = document.querySelectorAll(".transfer");
+    console.log($transfer);
+
+    $transfer.forEach((form, i) => {
+        form.addEventListener("submit", e => {
+            e.preventDefault();
+
+            let transferAmount = form.amount.value;
+            let recipientPlayer = form[`player-${i + 1}`].value;
+
+            handleTransfer(transferAmount, recipientPlayer);
+            updatePlayerBalances();
+        });
+    });
+
 });
 
 
@@ -101,11 +122,12 @@ const addClickEvent = () => {
     $playerContainer.forEach(function (box, index) {
         box.addEventListener('click', function () {
             activePlayerIndex = index;
-            activePlayer = playersArray[activePlayerIndex].name;
-            $activePlayer.innerText = `Aktywny gracz: ${activePlayer}`;
+            activePlayer = playersArray[activePlayerIndex];
+            $activePlayer.innerText = `Aktywny gracz: ${activePlayer.name}`;
+            $transfer = document.querySelectorAll(".transfer");
+            console.log($transfer);
         });
     });
-
 };
 
 const createOpponentsArray = () => {
@@ -115,10 +137,9 @@ const createOpponentsArray = () => {
 };
 
 
-
 const createOpponentsList = array => {
     array.forEach((player, i) => {
-        const $selectOpponent = document.querySelector(`#player-${i + 1}-select`);
+        const $selectOpponent = document.querySelector(`#player-${i + 1}`);
         player.opponents.forEach(opponent => {
             const option = document.createElement("option");
             option.value = opponent;
@@ -129,9 +150,11 @@ const createOpponentsList = array => {
 };
 
 
-
-
-
+const handleTransfer = (amount, recipient) => {
+    const activePlayer = playersArray[activePlayerIndex];
+    const recipientPlayer = playersArray.find(p => p.name === recipient);
+    activePlayer.makeTransfer(recipientPlayer, amount);
+};
 
 
 

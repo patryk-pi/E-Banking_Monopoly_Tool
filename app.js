@@ -19,9 +19,28 @@ class Player {
     }
 }
 
+class Bank extends Player {
+    constructor(name) {
+        super(name);
+        this.balance = Infinity;
+    }
+
+    makeTransfer(recipient, amount) {
+        if (recipient instanceof Player) {
+            this.operations.push(-amount);
+            recipient.balance += amount;
+            recipient.operations.push(amount);
+        } else {
+            alert("Nieprawidłowy odbiorca przelewu");
+        }
+    }
+}
+
 const playersArray = [];
 let activePlayerIndex = 0;
 let activePlayer = playersArray[activePlayerIndex];
+
+const bank = new Bank('bank')
 
 
 const $form = document.getElementById('playersForm');
@@ -45,6 +64,7 @@ const updatePlayerBalances = () => {
 
 $form.addEventListener('submit', e => {
     e.preventDefault();
+
 
     const numPlayers = $form.elements.players.value;
 
@@ -77,7 +97,9 @@ $names.addEventListener('submit', e => {
                             <p class="balance">${playersArray[index].balance}$</p>
                             <form class="transfer">
                                 <label for="player-${index + 1}">
-                                    <select id="player-${index + 1}" class="selectOpponent" name="selectOpponent"></select>
+                                    <select id="player-${index + 1}" class="selectOpponent" name="selectOpponent">
+                                        <option>bank</option>
+</select>
                                 </label>
                            
                             
@@ -100,6 +122,10 @@ $names.addEventListener('submit', e => {
     createOpponentsArray();
     addClickEvent();
     createOpponentsList(playersArray);
+
+    playersArray.forEach(player => {
+        player.opponents.push("bank");
+    })
     $transfer = document.querySelectorAll(".transfer");
     console.log($transfer);
 
@@ -152,7 +178,7 @@ const createOpponentsList = array => {
 
 const handleTransfer = (amount, recipient) => {
     const activePlayer = playersArray[activePlayerIndex];
-    const recipientPlayer = playersArray.find(p => p.name === recipient);
+    const recipientPlayer = playersArray.find(p => p.name === recipient) || bank;
     activePlayer.makeTransfer(recipientPlayer, amount);
 };
 
